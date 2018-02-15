@@ -1,12 +1,14 @@
 language: bash
 services:
   - docker
+notifications:
+  email:
+    - dev@joeir.net
 stages:
   - test
-
 jobs:
   include:
-    test:
+  - test:
       stage: test
       script:
         - docker-compose build test
