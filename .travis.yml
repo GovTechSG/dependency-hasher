@@ -18,3 +18,4 @@ jobs:
     script:
       - docker pull ${VERSION_TAGGER_IMAGE}
       - docker run --entrypoint="iterate" -v "$(pwd):/app" ${VERSION_TAGGER_IMAGE} -q -i
+      - git push -q https://${GH_USERNAME}:${GH_TOKEN}@github.com/${GH_REPO_PATH}.git --tags;
