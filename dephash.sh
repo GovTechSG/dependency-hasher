@@ -1,0 +1,92 @@
+#!/bin/sh
+CURR_DIR=$(dirname $0);
+CALLING_CMD="$0 $@";
+PATH_FILE="${1}";
+[ -z "${CALLING_CMD##*"--prod"*}" ] && F_PROD=1 || F_PROD=0;
+[ -z "${CALLING_CMD##*"--dev"*}" ] && F_DEV=1 || F_DEV=0;
+[ -z "${CALLING_CMD##*"--npm"*}" ] && F_NPM=1 || F_NPM=0;
+[ -z "${CALLING_CMD##*"--yarn"*}" ] && F_YARN=1 || F_YARN=0;
+[ -z "${CALLING_CMD##*"--debug"*}" ] && F_DEBUG=1 || F_DEBUG=0;
+[ -z "${CALLING_CMD##*"--help"*}" ] && F_HELP=1 || F_HELP=0;
+[ -z "$(command -v jq)" ] && DEP_JQ=0 || DEP_JQ=1;
+[ -z "$(command -v md5)" ] && MD5='md5sum' || MD5='md5';
+[ -z "$(command -v ${MD5})" ] && DEP_MD5=0 || DEP_MD5=1;
+[ -z "$(stat ${PATH_FILE})" ] && PATH_FOUND=0 || PATH_FOUND=1;
+
+if [ ${F_HELP} -eq 1 ]; then
+  printf -- \
+'\e[1m\e[38m
+dependency hasher tool
+----------------------
+usage:
+  dephasher.sh ./path/to/file [...options]
+
+options:
+  --prod      : selects for production dependencies only
+  --dev       : selects for development dependencies only
+  --npm       : selects the npm platform (package.json)
+  --yarn       : selects the yarn platform (yarn.lock)
+  --debug     : displays other debug statements
+  --help      : displays this message
+
+platform priority:
+  - npm
+  - yarn
+
+Exiting with status code 127.\e[0m
+
+';
+  exit 127;
+fi;
+
+if [ ${F_DEBUG} -eq 1 ]; then
+  printf -- "Configuration\n"
+  printf -- "-------------\n"
+  printf -- "> file path:    ${PATH_FILE}\n"
+  printf -- "> file valid:   ${PATH_FOUND}\n";
+  printf -- "> production:   ${F_PROD}\n";
+  printf -- "> development:  ${F_DEV}\n";
+  printf -- "> npm:          ${F_NPM}\n";
+fi;
+
+if [ ${PATH_FOUND} -eq 0 ]; then
+  printf -- "ERR: file ${PATH_FILE} could not be found. Exiting with exit code 1.\n";
+  exit 1;
+elif [ ${DEP_JQ} -eq 0 ]; then
+  printf -- "ERR: required dependency jq could not be found. Exiting with exit code 2.\n";
+  exit 2;
+elif [ ${DEP_MD5} -eq 0 ]; then
+  printf -- "ERR: required dependency md5/md5sum could not be found. Exiting with exit code 3.\n";
+  exit 3;
+fi;
+[ ${F_DEBUG} -eq 1 ] && printf -- "> dependency check passed.\n";
+
+if [ ${F_NPM} -eq 1 ]; then
+  DEPENDENCY_CONTENTS="$(cat ${PATH_FILE})";
+  if [ ${F_PROD} -eq 1 ]; then
+    [ ${F_DEBUG} -eq 1 ] && printf -- "> hash:         npm - prod only\n";
+    HASHEE="$(printf %s "${DEPENDENCY_CONTENTS}" | jq '.dependencies')";
+  elif [ ${F_DEV} -eq 1 ]; then
+    [ ${F_DEBUG} -eq 1 ] && printf -- "> hash:         npm - dev only\n";
+    HASHEE="$(printf %s "${DEPENDENCY_CONTENTS}" | jq '.devDependencies')";
+  else
+    [ ${F_DEBUG} -eq 1 ] && printf -- "> hash:         npm - all\n";
+    HASHEE="$(printf %s "${DEPENDENCY_CONTENTS}" | jq '.dependencies,.devDependencies')";
+  fi;
+fi;
+
+if [ ${F_YARN} -eq 1 ]; then
+  [ ${F_DEBUG} -eq 1 ] && printf -- "> hash:         yarn - all (only option)\n";
+  DEPENDENCY_CONTENTS="$(cat ${PATH_FILE})";
+  HASHEE="$(printf -- "${DEPENDENCY_CONTENTS}")";
+fi;
+
+if [ "${HASHEE}" = "" ]; then
+  printf -- "ERR: no platform was specified. Run --help to see the usage.\n";
+  printf -- "Exiting with status code 126.\n"
+  exit 126;
+fi;
+
+[ ${F_DEBUG} -eq 1 ] && printf -- "> result: ";
+RESULT="$(printf -- "${HASHEE}" | ${MD5} | cut -f 1 -d ' ')";
+printf -- "${RESULT}\n";

@@ -1,0 +1,13 @@
+language: bash
+services:
+  - docker
+stages:
+  - test
+
+jobs:
+  include:
+    test:
+      stage: test
+      script:
+        - docker-compose build test
+        - docker-compose run test
