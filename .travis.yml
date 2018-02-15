@@ -21,5 +21,6 @@ jobs:
           git checkout ${TRAVIS_BRANCH};
           docker pull ${VERSION_TAGGER_IMAGE};
           docker run --entrypoint="iterate" -v "$(pwd):/app" ${VERSION_TAGGER_IMAGE} -q -i;
+          git remote set-url origin https://${GH_USERNAME}:${GH_TOKEN}@github.com/${GH_REPO_PATH}.git;
           git push origin master --tags;
         fi;
