@@ -15,11 +15,11 @@ PATH_FILE="${1}";
 
 if [ ${F_HELP} -eq 1 ]; then
   printf -- \
-'\e[1m\e[38m
+"\e[1m\e[38m
 dependency hasher tool
 ----------------------
 usage:
-  dephasher.sh ./path/to/file [...options]
+  $0 ./path/to/file [...options]
 
 options:
   --prod      : selects for production dependencies only
@@ -35,7 +35,7 @@ platform priority:
 
 Exiting with status code 127.\e[0m
 
-';
+";
   exit 127;
 fi;
 

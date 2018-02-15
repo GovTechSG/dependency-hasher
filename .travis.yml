@@ -7,9 +7,14 @@ notifications:
     - dev@joeir.net
 stages:
   - test
+  - release
 jobs:
   include:
   - stage: test
     script:
       - docker-compose build tests
       - docker-compose run tests
+  - stage: release
+    script:
+      - docker pull ${VERSION_TAGGER_IMAGE}
+      - docker run --entrypoint="iterate" -v "$(pwd):/app" ${VERSION_TAGGER_IMAGE} -q -i
