@@ -11,5 +11,5 @@ jobs:
   include:
   - stage: test
     script:
-      - docker-compose build test
-      - docker-compose run test
+      - docker-compose build tests
+      - docker-compose run tests
