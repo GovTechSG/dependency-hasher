@@ -16,6 +16,10 @@ jobs:
       - docker-compose run tests
   - stage: release
     script:
-      - docker pull ${VERSION_TAGGER_IMAGE}
-      - docker run --entrypoint="iterate" -v "$(pwd):/app" ${VERSION_TAGGER_IMAGE} -q -i
-      - git push -q https://${GH_USERNAME}:${GH_TOKEN}@github.com/${GH_REPO_PATH}.git --tags;
+      - set -e
+      - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
+          git checkout ${TRAVIS_BRANCH};
+          docker pull ${VERSION_TAGGER_IMAGE};
+          docker run --entrypoint="iterate" -v "$(pwd):/app" ${VERSION_TAGGER_IMAGE} -q -i;
+          git push origin master --tags;
+        fi;
