@@ -15,6 +15,8 @@ jobs:
       - docker-compose build tests
       - docker-compose run tests
   - stage: release
+    only:
+      - master
     script:
       - set -e
       - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
